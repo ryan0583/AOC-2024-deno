@@ -1,0 +1,1 @@
+time -f "%U seconds" deno run --unstable-sloppy-imports --allow-read --allow-write solutions/$1/solution.ts 
