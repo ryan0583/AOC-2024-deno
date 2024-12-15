@@ -118,7 +118,7 @@ while (true) {
   seconds++;
   moveRobots(robotInfosPt2Copy);
 
-  if (seconds > 6600)
+  if (seconds > 6700)
     await printGridToConsole(
       gridHeight,
       gridWidth,

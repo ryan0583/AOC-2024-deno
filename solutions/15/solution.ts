@@ -84,10 +84,11 @@ const part1 = () => {
   return boxPositions;
 };
 
-// const finalBoxPositions = part1();
-// process.stdout.clearLine(0);
-// process.stdout.cursorTo(0);
-// log(sum(finalBoxPositions.map((box) => 100 * box.y + box.x)));
+process.stdout.write('Part 1...');
+process.stdout.write('\n');
+const finalBoxPositionsPart1 = part1();
+process.stdout.clearLine(0);
+process.stdout.cursorTo(0);
 
 const part2 = async () => {
   const extendedMap = (JSON.parse(JSON.stringify(map)) as string[][]).map(
@@ -118,11 +119,11 @@ const part2 = async () => {
     });
   });
 
-//   log(newMap.map((row) => row.join('')));
+  //   log(newMap.map((row) => row.join('')));
 
   for (let i = 0; i < moves.length; i++) {
     const move = moves[i];
-    process.stdout.cursorTo(0, 0);
+    process.stdout.cursorTo(0, 1);
     log(`Move ${i + 1}/${moves.length}`);
     log(move);
     const moveDirection = { x: 0, y: 0 };
@@ -143,10 +144,13 @@ const part2 = async () => {
       //   log(nextPositions);
       nextChars = nextPositions.map(({ x, y }) => newMap[y][x]);
 
-      const finalNextPositions = [...nextPositions];
+      const finalNextPositions = [] as Position[];
       nextChars.forEach((char, index) => {
         if (char === '[') {
           boxesToMove.push({ ...nextPositions[index] });
+          finalNextPositions.push({
+            ...nextPositions[index],
+          });
           if (
             ['^', 'v'].includes(move) &&
             !nextPositions.some(
@@ -160,6 +164,9 @@ const part2 = async () => {
             });
           }
         } else if (char === ']') {
+          finalNextPositions.push({
+            ...nextPositions[index],
+          });
           if (
             ['^', 'v'].includes(move) &&
             !nextPositions.some(
@@ -211,13 +218,15 @@ const part2 = async () => {
       });
     }
     log(newMap.map((row) => row.join('')));
-    await new Promise((r) => setTimeout(r, 100));
+    // await new Promise((r) => setTimeout(r, 50));
   }
 
   return boxPositions;
 };
 
+process.stdout.cursorTo(0, 0);
+process.stdout.write('Part 2...');
+process.stdout.write('\n');
 const finalBoxPositions2 = await part2();
-process.stdout.clearLine(0);
-process.stdout.cursorTo(0);
+log(sum(finalBoxPositionsPart1.map((box) => 100 * box.y + box.x)));
 log(sum(finalBoxPositions2.map((box) => 100 * box.y + box.x)));
