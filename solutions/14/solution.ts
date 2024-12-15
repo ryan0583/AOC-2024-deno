@@ -3,7 +3,9 @@ import { readLines } from '../../fileParser';
 import fs from 'node:fs';
 import { PositionAndVelocity } from '../../types';
 import { log } from '../../logger.ts';
-import { writeGridToFile } from '../../grid';
+import { printGridToConsole, writeGridToFile } from '../../grid';
+
+process.stdout.write('\x1Bc'); // Clear the console
 
 const gridWidth = 101;
 const gridHeight = 103;
@@ -116,12 +118,12 @@ while (true) {
   seconds++;
   moveRobots(robotInfosPt2Copy);
 
-  // if (seconds > 6600)
-  //   await printGridToConsole(
-  //     gridHeight,
-  //     gridWidth,
-  //     robotInfosPt2Copy.map((robotInfo) => robotInfo.position)
-  //   );
+  if (seconds > 6600)
+    await printGridToConsole(
+      gridHeight,
+      gridWidth,
+      robotInfosPt2Copy.map((robotInfo) => robotInfo.position)
+    );
 
   if (allRobotsUniquelyPositioned(robotInfosPt2Copy)) {
     writeGridToFile(gridDirectory, `${seconds}`, gridHeight, gridWidth);
@@ -129,5 +131,6 @@ while (true) {
   }
 }
 
+process.stdout.write('\n');
 log(pt1Answer);
 log(seconds);

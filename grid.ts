@@ -31,7 +31,7 @@ export const printGridToConsole = async (
   gridWidth: number,
   positions: Position[]
 ) => {
-  process.stdout.write('\x1Bc'); // Clear the console
+  process.stdout.cursorTo(0, 0);
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
       if (findPosition(x, y, positions)) {
