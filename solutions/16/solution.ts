@@ -5,15 +5,15 @@ import { Position } from '../../types';
 process.stdout.write('\x1Bc'); // Clear the console
 
 const directions = [
-  { x: 0, y: 1 }, // East
-  { x: 1, y: 0 }, // South
-  { x: 0, y: -1 }, // West
-  { x: -1, y: 0 }, // North
+  { x: 1, y: 0 }, // East
+  { x: 0, y: 1 }, // South
+  { x: -1, y: 0 }, // West
+  { x: 0, y: -1 }, // North
 ];
 
 function findMinCostPath(maze: string[][], start: Position, end: Position) {
   const visited = new Set<string>();
-  const positionQueue = [{ pos: start, dir: 0, cost: 0 }]; // Start facing East
+  const positionQueue = [{ pos: start, dir: 0, cost: 0, path: [] as string[] }]; // Start facing East
 
   while (positionQueue.length > 0) {
     // Sort the queue to prioritise the node with the lowest cost
@@ -26,7 +26,7 @@ function findMinCostPath(maze: string[][], start: Position, end: Position) {
     visited.add(stateKey);
 
     if (current.pos.x === end.x && current.pos.y === end.y) {
-      return current.cost;
+      return current;
     }
 
     // Move forward
@@ -40,6 +40,7 @@ function findMinCostPath(maze: string[][], start: Position, end: Position) {
         pos: forwardPos,
         dir: current.dir,
         cost: current.cost + 1,
+        path: [...current.path, `${forwardPos.x},${forwardPos.y}`],
       });
     }
 
@@ -48,13 +49,15 @@ function findMinCostPath(maze: string[][], start: Position, end: Position) {
       pos: current.pos,
       dir: (current.dir + 1) % 4,
       cost: current.cost + 1000,
+      path: [...current.path, 'R'],
     });
 
     // Rotate counterclockwise (left)
     positionQueue.push({
       pos: current.pos,
-      dir: (current.dir + 3) % 4,
+      dir: current.dir - 1 < 0 ? 3 : current.dir - 1,
       cost: current.cost + 1000,
+      path: [...current.path, 'L'],
     });
   }
 }
@@ -79,31 +82,44 @@ for (let y = 0; y < maze.length; y++) {
   }
 }
 
-console.log(findMinCostPath(maze, start, end));
+console.log(findMinCostPath(maze, start, end)?.cost);
 
-const findAllPossibleBestPaths = async (
+function findAllShortestPaths(
   maze: string[][],
   start: Position,
   end: Position
-) => {
-  const openList = [{ pos: start, dir: 0, cost: 0, path: [start] }]; // Start facing East
+) {
+  //   const visited = new Set<string>();
+  const positionQueue = [
+    {
+      pos: start,
+      dir: 0,
+      cost: 0,
+      path: new Set([`${start.x},${start.y}`]),
+    },
+  ]; // Start facing East
 
-  const pathPoints = new Set<string>();
   let minCost = Infinity;
+  const paths = new Set<string>();
 
-  while (openList.length > 0) {
-    // Sort the open list to prioritize the node with the lowest cost
-    openList.sort((a, b) => a.cost - b.cost);
-    const current = openList.shift()!;
+  const visited = {} as Record<string, number>;
 
-    if (current.cost > minCost) {
-      return pathPoints;
-    }
+  while (positionQueue.length > 0) {
+    // Sort the queue to prioritise the node with the lowest cost
+    positionQueue.sort((a, b) => a.cost - b.cost);
+    const current = positionQueue.shift()!;
+
+    const stateKey = `${current.pos.x},${current.pos.y},${current.dir}`;
+    if (visited[stateKey] && visited[stateKey] < current.cost) continue;
+    visited[stateKey] = current.cost;
+
+    console.log(current.cost);
+
+    if (minCost < current.cost) return paths;
 
     if (current.pos.x === end.x && current.pos.y === end.y) {
-      current.path.forEach(({ x, y }) => pathPoints.add(`${x},${y}`));
       minCost = current.cost;
-      continue;
+      current.path.forEach((p) => paths.add(p));
     }
 
     // Move forward
@@ -114,67 +130,82 @@ const findAllPossibleBestPaths = async (
 
     if (
       maze[forwardPos.y][forwardPos.x] !== '#' &&
-      !current.path.some(
-        (pos) => pos.x === forwardPos.x && pos.y === forwardPos.y
-      ) &&
-      !openList.some(
-        (pos) =>
-          pos.pos.x === forwardPos.x &&
-          pos.pos.y === forwardPos.y &&
-          pos.dir === current.dir
-      )
+      !current.path.has(`${forwardPos.x},${forwardPos.y}`)
     ) {
-      openList.push({
+      positionQueue.push({
         pos: forwardPos,
         dir: current.dir,
         cost: current.cost + 1,
-        path: [...current.path, forwardPos],
+        path: new Set([...current.path, `${forwardPos.x},${forwardPos.y}`]),
       });
     }
 
     // Rotate clockwise (right)
-    openList.push({
-      pos: current.pos,
-      dir: (current.dir + 1) % 4,
-      cost: current.cost + 1000,
-      path: [...current.path],
-    });
+    if (
+      !positionQueue.some(
+        (p) =>
+          p.pos.x === current.pos.x &&
+          p.pos.y === current.pos.y &&
+          p.dir === (current.dir + 1) % 4 &&
+          [...p.path].join('') === [...current.path].join('')
+      )
+    ) {
+      positionQueue.push({
+        pos: current.pos,
+        dir: (current.dir + 1) % 4,
+        cost: current.cost + 1000,
+        path: current.path,
+      });
+    }
 
     // Rotate counterclockwise (left)
-    openList.push({
-      pos: current.pos,
-      dir: (current.dir + 3) % 4,
-      cost: current.cost + 1000,
-      path: [...current.path],
-    });
-
-    process.stdout.cursorTo(0, 0);
-    for (let y = 0; y < maze.length; y++) {
-      for (let x = 0; x < maze[y].length; x++) {
-        if (current.path.some((pos) => pos.x === x && pos.y === y)) {
-          process.stdout.write('0');
-        } else {
-          process.stdout.write(maze[y][x]);
-        }
-      }
-      process.stdout.write('\n');
+    if (
+      !positionQueue.some(
+        (p) =>
+          p.pos.x === current.pos.x &&
+          p.pos.y === current.pos.y &&
+          p.dir === (current.dir - 1 < 0 ? 3 : current.dir - 1) &&
+          [...p.path].join('') === [...current.path].join('')
+      )
+    ) {
+      positionQueue.push({
+        pos: current.pos,
+        dir: current.dir - 1 < 0 ? 3 : current.dir - 1,
+        cost: current.cost + 1000,
+        path: current.path,
+      });
     }
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-};
 
-const allPathPoints = await findAllPossibleBestPaths(maze, start, end);
-
-process.stdout.cursorTo(0, 0);
-for (let y = 0; y < maze.length; y++) {
-  for (let x = 0; x < maze[y].length; x++) {
-    if (allPathPoints.has(`${x},${y}`)) {
-      process.stdout.write('0');
-    } else {
-      process.stdout.write(maze[y][x]);
-    }
+    // process.stdout.cursorTo(0, 0);
+    // for (let y = 0; y < maze.length; y++) {
+    //   for (let x = 0; x < maze[y].length; x++) {
+    //     if (current.path.has(`${x},${y}`)) {
+    //       process.stdout.write('0');
+    //     } else {
+    //       process.stdout.write(maze[y][x]);
+    //     }
+    //   }
+    //   process.stdout.write('\n');
+    // }
   }
-  process.stdout.write('\n');
+
+  return paths;
 }
+
+const allPathPoints = await findAllShortestPaths(maze, start, end);
+
+// console.log(allPathPoints);
+
+// process.stdout.cursorTo(0, 0);
+// for (let y = 0; y < maze.length; y++) {
+//   for (let x = 0; x < maze[y].length; x++) {
+//     if (allPathPoints.has(`${x},${y}`)) {
+//       process.stdout.write('0');
+//     } else {
+//       process.stdout.write(maze[y][x]);
+//     }
+//   }
+//   process.stdout.write('\n');
+// }
 
 console.log(allPathPoints.size);
