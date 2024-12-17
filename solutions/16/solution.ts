@@ -106,8 +106,8 @@ function findAllShortestPaths(
     positionQueue.sort((a, b) => a.cost - b.cost);
     const current = positionQueue.shift()!;
 
-    process.stdout.cursorTo(0, 0);
-    console.log(current.cost);
+    // process.stdout.cursorTo(0, 0);
+    // console.log(current.cost);
 
     if (minCost < current.cost) return paths;
 
@@ -178,17 +178,17 @@ function findAllShortestPaths(
       });
     }
 
-    // process.stdout.cursorTo(0, 0);
-    // for (let y = 0; y < maze.length; y++) {
-    //   for (let x = 0; x < maze[y].length; x++) {
-    //     if (current.path.has(`${x},${y}`)) {
-    //       process.stdout.write('0');
-    //     } else {
-    //       process.stdout.write(maze[y][x]);
-    //     }
-    //   }
-    //   process.stdout.write('\n');
-    // }
+    process.stdout.cursorTo(0, 0);
+    for (let y = 0; y < maze.length; y++) {
+      for (let x = 0; x < maze[y].length; x++) {
+        if (current.path.has(`${x},${y}`)) {
+          process.stdout.write('0');
+        } else {
+          process.stdout.write(maze[y][x]);
+        }
+      }
+      process.stdout.write('\n');
+    }
   }
 
   return paths;
