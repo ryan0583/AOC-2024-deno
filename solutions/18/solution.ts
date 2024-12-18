@@ -28,6 +28,46 @@ const lines = readLines(path.resolve(), 'solutions/18/input.txt').map(
 const start = { x: 0, y: 0 };
 const target = { x: maxX - 1, y: maxY - 1 };
 
+const findPath = (
+  walls: Set<string>,
+  costFn: (path: Set<string>, x: number, y: number, target: Position) => number
+) => {
+  const visited = new Set<string>();
+  const positionQueue = [{ pos: start, cost: 0, path: new Set<string>() }];
+
+  while (positionQueue.length > 0) {
+    // Sort the queue to prioritise the node with the lowest cost
+    positionQueue.sort((a, b) => a.cost - b.cost);
+    const current = positionQueue.shift()!;
+
+    const stateKey = `${current.pos.x},${current.pos.y}`;
+    visited.add(stateKey);
+
+    if (current.pos.x === target.x && current.pos.y === target.y) {
+      return current;
+    }
+
+    checkArr.forEach(([dx, dy]) => {
+      const x = current.pos.x + dx;
+      const y = current.pos.y + dy;
+      const nextKey = `${x},${y}`;
+
+      if (
+        isOnGrid({ x, y }) &&
+        !visited.has(nextKey) &&
+        !walls.has(nextKey) &&
+        !positionQueue.some((p) => p.pos.x === x && p.pos.y === y)
+      ) {
+        positionQueue.push({
+          pos: { x, y },
+          cost: costFn(current.path, x, y, target),
+          path: new Set([...current.path, stateKey]),
+        });
+      }
+    });
+  }
+};
+
 const findMinPath = async () => {
   const coorindateLimit = 1024;
 
@@ -37,84 +77,23 @@ const findMinPath = async () => {
 
   for (let y = 0; y < maxY; y++) {
     for (let x = 0; x < maxX; x++) {
-      if (truncatedLines.some((line) => line.x === x && line.y === y)) 
+      if (truncatedLines.some((line) => line.x === x && line.y === y))
         walls.add(`${x},${y}`);
     }
   }
 
-  const visited = new Set<string>();
-  const positionQueue = [{ pos: start, cost: 0, path: new Set<string>() }];
-
-  while (positionQueue.length > 0) {
-    // Sort the queue to prioritise the node with the lowest cost
-    positionQueue.sort((a, b) => a.cost - b.cost);
-    const current = positionQueue.shift()!;
-
-    const stateKey = `${current.pos.x},${current.pos.y}`;
-    visited.add(stateKey);
-
-    if (current.pos.x === target.x && current.pos.y === target.y) {
-      return current;
-    }
-
-    checkArr.forEach(([dx, dy]) => {
-      const x = current.pos.x + dx;
-      const y = current.pos.y + dy;
-      const nextKey = `${x},${y}`;
-
-      if (
-        isOnGrid({ x, y }) &&
-        !visited.has(nextKey) &&
-        !walls.has(nextKey) &&
-        !positionQueue.some((p) => p.pos.x === x && p.pos.y === y)
-      ) {
-        positionQueue.push({
-          pos: { x, y },
-          cost:
-            current.path.size + Math.abs(x - target.x) + Math.abs(y - target.y),
-          path: new Set([...current.path, stateKey]),
-        });
-      }
-    });
-  }
+  return findPath(
+    walls,
+    (path, x, y, target) =>
+      path.size + Math.abs(x - target.x) + Math.abs(y - target.y)
+  );
 };
 
-const findAnyPath = (walls: Set<string>) => {
-  const visited = new Set<string>();
-  const positionQueue = [{ pos: start, cost: 0, path: new Set<string>() }];
-
-  while (positionQueue.length > 0) {
-    // Sort the queue to prioritise the node with the lowest cost
-    positionQueue.sort((a, b) => a.cost - b.cost);
-    const current = positionQueue.shift()!;
-
-    const stateKey = `${current.pos.x},${current.pos.y}`;
-    visited.add(stateKey);
-
-    if (current.pos.x === target.x && current.pos.y === target.y) {
-      return current;
-    }
-
-    checkArr.forEach(([dx, dy]) => {
-      const x = current.pos.x + dx;
-      const y = current.pos.y + dy;
-      const nextKey = `${x},${y}`;
-
-      if (
-        isOnGrid({ x, y }) &&
-        !visited.has(nextKey) &&
-        !walls.has(nextKey) &&
-        !positionQueue.some((p) => p.pos.x === x && p.pos.y === y)
-      ) {
-        positionQueue.push({
-          pos: { x, y },
-          cost: Math.abs(x - target.x) + Math.abs(y - target.y),
-          path: new Set([...current.path, stateKey]),
-        });
-      }
-    });
-  }
-};
+const findAnyPath = (walls: Set<string>) =>
+  findPath(
+    walls,
+    (path, x, y, target) => Math.abs(x - target.x) + Math.abs(y - target.y)
+  );
 
 const findFirstWithNoPath = async () => {
   let min = 1024;
@@ -125,7 +104,7 @@ const findFirstWithNoPath = async () => {
     const truncatedLines = lines.slice(0, mid);
 
     const walls = new Set<string>();
-    
+
     process.stdout.cursorTo(0, 0);
     log(mid);
     // log(min);
@@ -135,12 +114,12 @@ const findFirstWithNoPath = async () => {
       for (let x = 0; x < maxX; x++) {
         if (truncatedLines.some((line) => line.x === x && line.y === y)) {
           walls.add(`${x},${y}`);
-            process.stdout.write('#');
+          process.stdout.write('#');
         } else {
-            process.stdout.write('.');
+          process.stdout.write('.');
         }
       }
-        process.stdout.write('\n');
+      process.stdout.write('\n');
     }
 
     const mazePath = findAnyPath(walls);
