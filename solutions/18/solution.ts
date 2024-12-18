@@ -37,51 +37,18 @@ const findMinPath = async () => {
 
   for (let y = 0; y < maxY; y++) {
     for (let x = 0; x < maxX; x++) {
-      if (truncatedLines.some((line) => line.x === x && line.y === y)) {
+      if (truncatedLines.some((line) => line.x === x && line.y === y)) 
         walls.add(`${x},${y}`);
-        // process.stdout.write('#');
-      } else {
-        // process.stdout.write('.');
-      }
     }
-    // process.stdout.write('\n');
   }
-
-  //   log(walls.size);
 
   const visited = new Set<string>();
   const positionQueue = [{ pos: start, cost: 0, path: new Set<string>() }];
-
-  //   let minPath = null as {
-  //     pos: Position;
-  //     cost: number;
-  //     path: Set<string>;
-  //   } | null;
 
   while (positionQueue.length > 0) {
     // Sort the queue to prioritise the node with the lowest cost
     positionQueue.sort((a, b) => a.cost - b.cost);
     const current = positionQueue.shift()!;
-
-    // if (minPath && current.path.size > minPath?.path.size) {
-    //   continue;
-    // }
-
-    // process.stdout.cursorTo(0, 0);
-    // for (let y = 0; y < maxY; y++) {
-    //   for (let x = 0; x < maxX; x++) {
-    //     if (current.pos.x === x && current.pos.y === y) {
-    //       process.stdout.write('*');
-    //     } else if (walls.has(`${x},${y}`)) {
-    //       walls.add(`${x},${y}`);
-    //       process.stdout.write('#');
-    //     } else {
-    //       process.stdout.write('.');
-    //     }
-    //   }
-    //   process.stdout.write('\n');
-    // }
-    // await new Promise((resolve) => setTimeout(resolve, 200));
 
     const stateKey = `${current.pos.x},${current.pos.y}`;
     visited.add(stateKey);
@@ -110,26 +77,7 @@ const findMinPath = async () => {
       }
     });
   }
-  //   return minPath;
 };
-
-const bestPath = await findMinPath();
-
-// process.stdout.cursorTo(0, 0);
-// for (let y = 0; y < maxY; y++) {
-//   for (let x = 0; x < maxX; x++) {
-//     if (bestPath?.path.has(`${x},${y}`)) {
-//       process.stdout.write('O');
-//     } else if (walls.has(`${x},${y}`)) {
-//       walls.add(`${x},${y}`);
-//       process.stdout.write('#');
-//     } else {
-//       process.stdout.write('.');
-//     }
-//   }
-//   process.stdout.write('\n');
-// }
-log(bestPath?.path.size);
 
 const findAnyPath = (walls: Set<string>) => {
   const visited = new Set<string>();
@@ -168,7 +116,7 @@ const findAnyPath = (walls: Set<string>) => {
   }
 };
 
-const findFirstWithNoPath = () => {
+const findFirstWithNoPath = async () => {
   let min = 1024;
   let max = lines.length;
 
@@ -177,8 +125,9 @@ const findFirstWithNoPath = () => {
     const truncatedLines = lines.slice(0, mid);
 
     const walls = new Set<string>();
-
-    // process.stdout.cursorTo(0, 0);
+    
+    process.stdout.cursorTo(0, 0);
+    log(mid);
     // log(min);
     // log(max);
     // log(mid);
@@ -186,24 +135,47 @@ const findFirstWithNoPath = () => {
       for (let x = 0; x < maxX; x++) {
         if (truncatedLines.some((line) => line.x === x && line.y === y)) {
           walls.add(`${x},${y}`);
-          //   process.stdout.write('#');
+            process.stdout.write('#');
         } else {
-          //   process.stdout.write('.');
+            process.stdout.write('.');
         }
       }
-      //   process.stdout.write('\n');
+        process.stdout.write('\n');
     }
 
     const mazePath = findAnyPath(walls);
+
+    process.stdout.cursorTo(0, 1);
+    for (let y = 0; y < maxY; y++) {
+      for (let x = 0; x < maxX; x++) {
+        if (mazePath?.path.has(`${x},${y}`)) {
+          process.stdout.write('O');
+        } else if (walls.has(`${x},${y}`)) {
+          walls.add(`${x},${y}`);
+          process.stdout.write('#');
+        } else {
+          process.stdout.write('.');
+        }
+      }
+      process.stdout.write('\n');
+    }
+    console.log(mazePath ? 'Path found' : 'No path found');
+    // wait for 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     if (mazePath) {
       min = mid;
     } else {
       max = mid;
     }
+
+    process.stdout.write('\x1Bc'); // Clear the console
   }
 
   return lines[min];
 };
 
-const firstPointWithNoPath = findFirstWithNoPath();
+const firstPointWithNoPath = await findFirstWithNoPath();
+const bestPath = await findMinPath();
+log(bestPath?.path.size);
 log(`${firstPointWithNoPath.x},${firstPointWithNoPath.y}`);
