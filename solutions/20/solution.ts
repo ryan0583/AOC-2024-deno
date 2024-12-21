@@ -3,6 +3,7 @@ import { readLines } from '../../fileParser';
 import { Position } from '../../types';
 import { isOnGrid } from '../../grid';
 import { log } from 'node:console';
+import { stdout } from 'node:process';
 
 process.stdout.write('\x1Bc'); // Clear the console
 
@@ -10,14 +11,9 @@ const lines = readLines(path.resolve(), 'solutions/20/input.txt').map((line) =>
   line.split('')
 );
 
-const internalRaceTrack = lines.map((line) => line.slice(1, line.length - 1)).slice(1, lines.length - 1);
-
-// for (let y = 0; y < internalRaceTrack.length; y++) {
-//   for (let x = 0; x < internalRaceTrack[y].length; x++) {
-//     stdout.write(internalRaceTrack[y][x]);
-//   }
-//   stdout.write('\n');
-// }
+const internalRaceTrack = lines
+  .map((line) => line.slice(1, line.length - 1))
+  .slice(1, lines.length - 1);
 
 const maxX = internalRaceTrack[0].length;
 const maxY = internalRaceTrack.length;
@@ -72,41 +68,34 @@ const findRacetrackPath = () => {
 
 const racetrack = [...findRacetrackPath()];
 
-// log(racetrack);
+const getDistancesSavedMoreThan100 = (maxCollisionDisabledTime: number) => {
+  const distancesSaved = [] as number[];
 
-const distancesSaved = [] as number[];
+  for (let i = 0; i < racetrack.length; i++) {
+    stdout.cursorTo(0, 0);
+    log(i);
+    for (let j = racetrack.length - 1; j > i + 100; j--) {
+      const [cheatStartX, cheatStartY] = racetrack[i].split(',').map(Number);
+      const [cheatEndX, cheatEndY] = racetrack[j].split(',').map(Number);
 
-// each wall is a potential set of cheats
-for (const wall of walls) {
-  const [wallX, wallY] = wall.split(',').map(Number);
-  const cheatsIndices = [] as number[];
-  [
-    [-1, 0],
-    [1, 0],
-    [0, -1],
-    [0, 1],
-  ].forEach(([dx, dy]) => {
-    const x = wallX + dx;
-    const y = wallY + dy;
-    const racetrackIndex = racetrack.indexOf(`${x},${y}`);
-    if (
-      racetrackIndex !== -1
-    ) {
-      cheatsIndices.push(racetrackIndex);
+      const manhattanDistance =
+        Math.abs(cheatEndX - cheatStartX) + Math.abs(cheatEndY - cheatStartY);
+
+      if (
+        manhattanDistance <= maxCollisionDisabledTime &&
+        j - i - manhattanDistance >= 100
+      ) {
+        distancesSaved.push(j - i - manhattanDistance);
+      }
     }
-  })
-
-  cheatsIndices.sort((a, b) => a - b);
-  
-  if (cheatsIndices.length > 1) { 
-    distancesSaved.push(cheatsIndices[1] - cheatsIndices[0] - 2);
   }
-  if (cheatsIndices.length > 2) {
-    distancesSaved.push(cheatsIndices[2] - cheatsIndices[1] - 2);
-    distancesSaved.push(cheatsIndices[2] - cheatsIndices[0] - 2);
-  }
-}
 
-// log(distancesSaved.sort((a, b) => b - a));
+  return distancesSaved;
+};
 
-log(distancesSaved.filter((distance) => distance >= 100).length);
+const part1 = getDistancesSavedMoreThan100(2);
+stdout.write('\x1Bc'); // Clear the console
+const part2 = getDistancesSavedMoreThan100(20);
+stdout.write('\x1Bc'); // Clear the console
+log(part1.length);
+log(part2.length);
