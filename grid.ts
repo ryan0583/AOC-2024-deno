@@ -1,6 +1,9 @@
 import { Position } from './types.ts';
 import fs from 'node:fs';
 
+export const isOnGrid = ({ x, y }: Position, maxX: number, maxY: number) =>
+  x >= 0 && x <= maxX - 1 && y >= 0 && y <= maxY - 1;
+
 const findPosition = (x: number, y: number, positions: Position[]) =>
   positions.find((position) => position.x === x && position.y === y);
 
